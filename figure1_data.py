@@ -1,7 +1,6 @@
 import math
 import re
-
-##this is a stand alone function for standard deviations along with code for testing
+##this script generates the data for figure 1, takes a couple days with one core
 
 
 def round_up(number,places):
@@ -17,6 +16,7 @@ def round_up(number,places):
             return round(float(number),places)
     else:
         return round(float(number),places)
+
 
 
 var_precision=12
@@ -138,83 +138,32 @@ def grimmer(sd,sd_decimals,size,Type,mean=None,mean_decimals=None):
     return sample_count,population_count
 
 
-#######thorough testing
-#######note, it might be possible to get a key error if large standard deviations are tested here
-#######this is fixable but this test shouldn't be using large values anyways
-std_places=2
-ave_places=2
-
-for r in range(5,100):
-    import importlib
-    mod = importlib.import_module('patterns.'+str(r))
-    global_pattern_zero=mod.pattern_zero[:]
-    global_pattern_even=mod.pattern_even[:]
-    global_pattern_odd=mod.pattern_odd[:]
-    global_averages_even=mod.averages_even.copy()
-    global_averages_odd=mod.averages_odd.copy()
-    global_pattern_zero_rounded=[round_up('.'+repr(n).split('.')[1],5) for n in global_pattern_zero]
-    global_averages_zero={round_up('.'+repr(n).split('.')[1],5):global_averages_even[n] for n in global_averages_even if round_up('.'+repr(n).split('.')[1],5) in global_pattern_zero_rounded}
-    test=global_pattern_zero[:]
-    for n in range(1,3):
-        if n%2==0:
-            for value in global_pattern_even:
-                test.append(value+n)
-        else:
-            for value in global_pattern_odd:
-                test.append(value+n)
-    print r, len(test),test[-1]
-    pattern_zero=mod.pattern_zero[:]
-    pattern_even=mod.pattern_even[:]
-    pattern_odd=mod.pattern_odd[:]
-    averages_even=mod.averages_even.copy()
-    averages_odd=mod.averages_odd.copy()
-    pattern_zero_rounded=[round_up('.'+repr(n).split('.')[1],5) for n in pattern_zero]
-    averages_zero={round_up('.'+repr(n).split('.')[1],5):averages_even[n] for n in averages_even if round_up('.'+repr(n).split('.')[1],5) in pattern_zero_rounded}
-    for i in test:
-        #for 'Population':
-##        std=round_up(i**.5,std_places)
-        ##for 'Sample':
-        std=round_up((i*float(r)/(r-1))**.5,std_places)
-        if int(i)==0:
-            ave=round_up(repr(global_averages_zero[round_up('.'+repr(i).split('.')[1],5)][0]),ave_places)
-        elif int(i)%2==0:
-            ave=round_up(repr(global_averages_even[round_up('.'+repr(i).split('.')[1],var_precision)][0]),ave_places)
-        else:
-            ave=round_up(repr(global_averages_odd[round_up('.'+repr(i).split('.')[1],var_precision)][0]),ave_places)
-        ##for 'Population'
-##        if grimmer(std,std_places,r,'Population',ave,ave_places)[1]!=1:
-##            print i,std,ave,r,low,high,grimmer(std,std_places,r,'Population',ave,ave_places)
-
-        ##for 'Sample':
-        if grimmer(std,std_places,r,'Sample',ave,ave_places)[0]!=1:
-            print i,std,ave,r,low,high,grimmer(std,std_places,r,'Sample',ave,ave_places)
 
 
-######random testing
-import random
-def variance(data,u):
-        return sum([(i-u)**2 for i in data])/len(data)
+data=[]
+for N in range(5,100):
+    print N
+    index=0
+    averages=[round(k/float(N),2) for k in range(N)]
+    tempdata=[]
+    while index<20:
+        count=0
+        for i in range(100):
+            std=round(index+i/100.0,2)
+            for mean in averages:
+                if grimmer(std,2,N,'Sample',mean,2)[0]==0:
+                    count+=1
+        tempdata.append(float(count)/len(averages))
+        index+=1
+    data.append(tempdata)
 
-##for r in range(40,41):
-##    print r
-##    std_places=2
-##    ave_places=2
-##    for i in range(10000):
-##        test=[random.randint(0,10) for k in range(r)]
-##        mean=round_up(sum(test)/float(len(test)),ave_places)
-##        true_mean=round_up(sum(test)/float(len(test)),16)
-##        #for 'Population':
-####        std=round_up(variance(test,true_mean)**.5,std_places)
-####        if grimmer(std,std_places,r,'Population',mean,ave_places)[1]<1:
-####            print grimmer(std,std_places,r,'Population',mean,ave_places),test
-####        print grimmer(std,std_places,r,'Population',mean,ave_places),std,std**2,mean
-##
-##        #for 'Sample'
-##        std=round_up((variance(test,true_mean)*len(test)/(len(test)-1))**.5,std_places)
-##        if grimmer(std,std_places,r,'Sample',mean,ave_places)[0]<1:
-##            print grimmer(std,std_places,r,'Sample',mean,ave_places),test
-####        print grimmer(std,std_places,r,'Sample',mean,ave_places),std,std**2,mean
 
-        
+f=open('for_figure1.txt','w')
+for i in data:
+    f.write(str(i))
+    f.write('\n')
+f.close()
 
+            
+                
 

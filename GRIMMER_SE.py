@@ -1,8 +1,9 @@
 import math
 import re
 
-##this is a stand alone function for standard deviations along with code for testing
-
+## this is a stand alone function for variances along with code for testing
+## I realize variables are labeled "sd" or "std" instead of "se"
+## if it bothers you change it
 
 def round_up(number,places):
     if type(number)==type('string'):
@@ -22,7 +23,7 @@ def round_up(number,places):
 var_precision=12
 
 #use floats for values except for size and Type, size is int Type is either "Sample", "Population", or random string
-def grimmer(sd,sd_decimals,size,Type,mean=None,mean_decimals=None):
+def grimmer(sd,sd_decimals,size,mean=None,mean_decimals=None):
     global possibilities
     global averages_even
     global averages_odd
@@ -85,62 +86,37 @@ def grimmer(sd,sd_decimals,size,Type,mean=None,mean_decimals=None):
         else:
             return "GRIM failed"
     lower=sd-.5/(10**sd_decimals)
+    if lower<0:
+        lower=0
     higher=sd+.5/(10**sd_decimals)    
-    low=math.floor(lower**2)
-    high=math.ceil(higher**2)
-    sample_count=0
-    population_count=0
-    if Type!='Sample':
-        possibilities=loop(low,high)
-        if grim:
-            for j in possibilities:
-##                print j
-                if int(j[0])==0:
-                    if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_zero[j[1]][1]]:
-                        if round_up(j[0]**.5,sd_decimals)==sd:
-                            population_count+=1
-                elif int(j[0])%2==0:
-                    if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_even[j[1]][1]]:
-                        if round_up(j[0]**.5,sd_decimals)==sd:
-                            population_count+=1
-                else:
-                    if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_odd[j[1]][1]]:
-                        if round_up(j[0]**.5,sd_decimals)==sd:
-                            population_count+=1
-        else:
-            for j in possibilities:
-                if round_up(j[0]**.5,sd_decimals)==sd:
-                    population_count+=1
-
-    if Type!='Population':
-        #recalculate low and high for sample variance
-        low=math.floor(low*(size-1)/size)
-        high=math.ceil(high*(size-1)/size)
-        possibilities=loop(low,high)
-        if grim:
-            for j in possibilities:
-                if int(j[0])==0:
-                    if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_zero[j[1]][1]]:
-                        if round_up((j[0]*size/(size-1))**.5,sd_decimals)==sd:
-                            sample_count+=1
-                elif int(j[0])%2==0:
-                    if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_even[j[1]][1]]:
-                        if round_up((j[0]*size/(size-1))**.5,sd_decimals)==sd:
-                            sample_count+=1
-                else:
-                    if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_odd[j[1]][1]]:
-                        if round_up((j[0]*size/(size-1))**.5,sd_decimals)==sd:
-                            sample_count+=1
-        else:
-            for j in possibilities:
-                if round_up((j[0]*size/(size-1))**.5,sd_decimals)==sd:
-                    sample_count+=1
-    return sample_count,population_count
+    low=math.floor((lower*size**.5)**2)
+    low=math.floor(low*(size-1)/size)
+    high=math.ceil((higher*size**.5)**2)
+    high=math.ceil(high*(size-1)/size)
+    count=0
+    possibilities=loop(low,high)
+    if grim:
+        for j in possibilities:
+            if int(j[0])==0:
+                if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_zero[j[1]][1]]:
+                    if round_up(((j[0]*size/(size-1))**.5)/size**.5,sd_decimals)==sd:
+                        count+=1
+            elif int(j[0])%2==0:
+                if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_even[j[1]][1]]:
+                    if round_up(((j[0]*size/(size-1))**.5)/size**.5,sd_decimals)==sd:
+                        count+=1
+            else:
+                if round_up('.'+repr(mean).split('.')[1],mean_decimals) in [round_up(ave,mean_decimals) for ave in averages_odd[j[1]][1]]:
+                    if round_up(((j[0]*size/(size-1))**.5)/size**.5,sd_decimals)==sd:
+                        count+=1
+    else:
+        for j in possibilities:
+            if round_up(((j[0]*size/(size-1))**.5)/size**.5,sd_decimals)==sd:
+                count+=1
+    return count
 
 
-#######thorough testing
-#######note, it might be possible to get a key error if large standard deviations are tested here
-#######this is fixable but this test shouldn't be using large values anyways
+#thorough testing
 std_places=2
 ave_places=2
 
@@ -171,23 +147,15 @@ for r in range(5,100):
     pattern_zero_rounded=[round_up('.'+repr(n).split('.')[1],5) for n in pattern_zero]
     averages_zero={round_up('.'+repr(n).split('.')[1],5):averages_even[n] for n in averages_even if round_up('.'+repr(n).split('.')[1],5) in pattern_zero_rounded}
     for i in test:
-        #for 'Population':
-##        std=round_up(i**.5,std_places)
-        ##for 'Sample':
-        std=round_up((i*float(r)/(r-1))**.5,std_places)
+        std=round_up(((i*float(r)/(r-1))**.5)/r**.5,std_places)
         if int(i)==0:
             ave=round_up(repr(global_averages_zero[round_up('.'+repr(i).split('.')[1],5)][0]),ave_places)
         elif int(i)%2==0:
             ave=round_up(repr(global_averages_even[round_up('.'+repr(i).split('.')[1],var_precision)][0]),ave_places)
         else:
             ave=round_up(repr(global_averages_odd[round_up('.'+repr(i).split('.')[1],var_precision)][0]),ave_places)
-        ##for 'Population'
-##        if grimmer(std,std_places,r,'Population',ave,ave_places)[1]!=1:
-##            print i,std,ave,r,low,high,grimmer(std,std_places,r,'Population',ave,ave_places)
-
-        ##for 'Sample':
-        if grimmer(std,std_places,r,'Sample',ave,ave_places)[0]!=1:
-            print i,std,ave,r,low,high,grimmer(std,std_places,r,'Sample',ave,ave_places)
+        if grimmer(std,std_places,r,ave,ave_places)!=1:
+            print i,std,ave,r,low,high,grimmer(std,std_places,r,ave,ave_places)
 
 
 ######random testing
@@ -195,25 +163,17 @@ import random
 def variance(data,u):
         return sum([(i-u)**2 for i in data])/len(data)
 
-##for r in range(40,41):
+##for r in range(5,100):
 ##    print r
 ##    std_places=2
 ##    ave_places=2
-##    for i in range(10000):
+##    for i in range(200):
 ##        test=[random.randint(0,10) for k in range(r)]
 ##        mean=round_up(sum(test)/float(len(test)),ave_places)
 ##        true_mean=round_up(sum(test)/float(len(test)),16)
-##        #for 'Population':
-####        std=round_up(variance(test,true_mean)**.5,std_places)
-####        if grimmer(std,std_places,r,'Population',mean,ave_places)[1]<1:
-####            print grimmer(std,std_places,r,'Population',mean,ave_places),test
-####        print grimmer(std,std_places,r,'Population',mean,ave_places),std,std**2,mean
-##
-##        #for 'Sample'
-##        std=round_up((variance(test,true_mean)*len(test)/(len(test)-1))**.5,std_places)
-##        if grimmer(std,std_places,r,'Sample',mean,ave_places)[0]<1:
-##            print grimmer(std,std_places,r,'Sample',mean,ave_places),test
-####        print grimmer(std,std_places,r,'Sample',mean,ave_places),std,std**2,mean
+##        std=round_up((((variance(test,true_mean)*len(test)/(len(test)-1)))**.5)/r**.5,std_places)
+##        if grimmer(std,std_places,r,mean,ave_places)<1:
+##            print grimmer(std,std_places,r,mean,ave_places),std,mean,test
 
         
 
