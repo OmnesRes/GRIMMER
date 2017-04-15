@@ -25,19 +25,19 @@ def run(n,r):
                 all_deviations[var]={u:''}
             else:
                 all_deviations[var][u]=''
-        end=time.clock()
-        duration=end-start
-        data=sorted(all_deviations.keys())
-        f=open(os.path.join(BASE_DIR,'raw_variances',str(r)+'.txt'),'w')
-        #write a header line that includes time to complete
-        f.write(str(n)+' '+str(duration))
+    end=time.clock()
+    duration=end-start
+    data=sorted(all_deviations.keys())
+    f=open(os.path.join(BASE_DIR,'raw_variances',str(r)+'.txt'),'w')
+    #write a header line that includes time to complete
+    f.write(str(n)+' '+str(duration))
+    f.write('\n')
+    for i in data:
+        f.write(str(i))
+        f.write('\t')
+        f.write(str(sorted(all_deviations[i].keys())))
         f.write('\n')
-        for i in data:
-            f.write(str(i))
-            f.write('\t')
-            f.write(str(sorted(all_deviations[i].keys())))
-            f.write('\n')
-        f.close()
+    f.close()
 
 
 
